@@ -1,23 +1,26 @@
 package com.coinMarket.controller;
 
 import com.coinMarket.configuration.JwtProvider;
+import com.coinMarket.model.TwoFactorOTP;
 import com.coinMarket.model.User;
 import com.coinMarket.repositories.IUserRepository;
 import com.coinMarket.response.AuthResponse;
 import com.coinMarket.service.CustomUserDetailsService;
+import com.coinMarket.service.EmailService;
+import com.coinMarket.service.ITwoFactorOtpService;
+import com.coinMarket.utils.OtpUtil;
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -28,6 +31,8 @@ public class AuthController {
 
 	IUserRepository userRepository;
 	CustomUserDetailsService customUserDetailsService;
+	ITwoFactorOtpService twoFactorOtpService;
+	EmailService emailService;
 
 	@PostMapping("/signup")
 	public ResponseEntity<AuthResponse> register(@RequestBody User user) {
@@ -43,7 +48,8 @@ public class AuthController {
 			  .build();
 		newUser = userRepository.save(newUser);
 
-		Authentication auth = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
+		Authentication auth = new UsernamePasswordAuthenticationToken(user.getEmail()
+			  , user.getPassword());
 		SecurityContextHolder.getContext().setAuthentication(auth);
 
 		String jwt = JwtProvider.generateToken(auth);
@@ -57,7 +63,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<AuthResponse> login(@RequestBody User user) {
+	public ResponseEntity<AuthResponse> login(@RequestBody User user) throws MessagingException {
 		String username = user.getEmail();
 		String password = user.getPassword();
 
@@ -65,6 +71,28 @@ public class AuthController {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 
 		String jwt = JwtProvider.generateToken(auth);
+
+		User authUser = userRepository.findByEmail(username);
+
+		if (user.getTwoFactorAuth().isEnabled()) {
+			AuthResponse res = AuthResponse.builder()
+				  .message("two factor auth is enabled")
+				  .isTwoFactorAuthEnabled(true)
+				  .build();
+			String otp = OtpUtil.generateOtp();
+
+			TwoFactorOTP oldTwoFactorOTP = twoFactorOtpService.findByUserId(authUser.getId());
+			if (oldTwoFactorOTP != null) {
+				twoFactorOtpService.deleteTwoFactorOtp(oldTwoFactorOTP);
+			}
+			TwoFactorOTP newTwoFactorOtp = twoFactorOtpService.createTwoFactorOtp(authUser,otp,jwt);
+//			======================send email
+			emailService.sendEmailVerificationEmail(username, otp);
+
+
+			res.setSession(newTwoFactorOtp.getId());
+			return new ResponseEntity<>(res,HttpStatus.ACCEPTED);
+		}
 
 		AuthResponse response = AuthResponse.builder()
 			  .jwt(jwt)
@@ -74,13 +102,28 @@ public class AuthController {
 		return new ResponseEntity<>(response,HttpStatus.CREATED);
 	}
 
+
+	@PostMapping("/two-factor/otp/{otp}")
+	public ResponseEntity<AuthResponse> verifySignInOtp(@PathVariable String otp, @RequestParam String twoFactorOtpId) throws Exception {
+		TwoFactorOTP twoFactorOTP = twoFactorOtpService.findById(twoFactorOtpId);
+		if (twoFactorOtpService.verifyTwoFactorOtp(twoFactorOTP, otp)) {
+			AuthResponse response = AuthResponse.builder()
+				  .message("Two factor authentication verified")
+				  .isTwoFactorAuthEnabled(true)
+				  .jwt(twoFactorOTP.getJwt())
+				  .build();
+			return new ResponseEntity<>(response,HttpStatus.OK);
+		}
+		throw new Exception("invalid otp");
+	}
+
 	private Authentication authenticate(String username, String password) {
 		UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 		if (userDetails == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
 		}
 		if (!password.equals(userDetails.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
+			throw new BadCredentialsException("Wrong password");
 		}
 		return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
 	}
