@@ -1,9 +1,8 @@
 package com.coinMarket.controller;
 
-import com.coinMarket.model.Order;
-import com.coinMarket.model.User;
-import com.coinMarket.model.Wallet;
-import com.coinMarket.model.WalletTransaction;
+import com.coinMarket.model.*;
+import com.coinMarket.response.PaymentResponse;
+import com.coinMarket.service.IPaymentOrderService;
 import com.coinMarket.service.IUserService;
 import com.coinMarket.service.IWalletService;
 import com.coinMarket.service.OrderService;
@@ -23,6 +22,7 @@ public class WalletController {
 	IWalletService walletService;
 	IUserService userService;
 	OrderService orderService;
+	IPaymentOrderService paymentService;
 
 
 	@GetMapping
@@ -60,6 +60,28 @@ public class WalletController {
 
 		return new ResponseEntity<>(wallet, HttpStatus.ACCEPTED);
 	}
+
+	@PutMapping("/wallet/deposit")
+	public ResponseEntity<Wallet> addBalanceToWallet(
+		  @RequestHeader("Authorization") String jwt,
+		  @RequestParam(name = "order_id") Long orderId,
+		  @RequestParam(name = "payment_id") String paymentId) throws Exception {
+
+		User user = userService.findUserProfileByJwt(jwt);
+
+		Wallet wallet = walletService.getUserWallet(user);
+
+		PaymentOrder order = paymentService.getPaymentOrderById(orderId);
+
+		Boolean status = paymentService.ProceedPaymentOrder(order, paymentId);
+
+		if (status) {
+			wallet = walletService.addBalance(wallet, order.getAmount());
+		}
+
+		return new ResponseEntity<>(wallet, HttpStatus.ACCEPTED);
+	}
+
 
 
 }
