@@ -2,13 +2,9 @@ package com.coinMarket.service;
 
 import com.coinMarket.enums.OrderStatus;
 import com.coinMarket.enums.OrderType;
-import com.coinMarket.model.Coin;
-import com.coinMarket.model.Order;
-import com.coinMarket.model.OrderItem;
-import com.coinMarket.model.User;
+import com.coinMarket.model.*;
 import com.coinMarket.repositories.IOrderItemRepository;
 import com.coinMarket.repositories.IOrderRepository;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,16 +18,17 @@ import java.util.List;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class OrderService implements IOrderService{
+public class OrderService implements IOrderService {
 
 	IOrderRepository orderRepository;
 	IWalletService walletService;
 	IOrderItemRepository orderItemRepository;
+	IAssetService assetService;
 
 	@Override
 	public Order createOrder(User user, OrderItem orderItem, OrderType orderType) {
 
-		double price = orderItem.getCoin().getCurrentPrice()*orderItem.getQuantity();
+		double price = orderItem.getCoin().getCurrentPrice() * orderItem.getQuantity();
 
 		Order order = new Order();
 		order.setPrice(BigDecimal.valueOf(price));
@@ -70,7 +67,7 @@ public class OrderService implements IOrderService{
 		}
 
 		double buyPrice = coin.getCurrentPrice();
-		OrderItem orderItem = createOrderItem(coin, quantity,buyPrice, 0);
+		OrderItem orderItem = createOrderItem(coin, quantity, buyPrice, 0);
 
 		Order order = createOrder(user, orderItem, OrderType.BUY);
 		orderItem.setOrder(order);
@@ -81,6 +78,14 @@ public class OrderService implements IOrderService{
 		Order savedOrder = orderRepository.save(order);
 
 		//create asset
+		Asset oldAsset = assetService.findAssetByUserIdAndCoinId(
+			  order.getUser().getId(),
+			  order.getOrderItem().getCoin().getId());
+		if (oldAsset == null) {
+			Asset newAsset = assetService.createAsset(user, orderItem.getCoin(), orderItem.getQuantity());
+		} else {
+			assetService.updateAsset(oldAsset.getId(), quantity);
+		}
 
 		return savedOrder;
 	}
@@ -92,31 +97,33 @@ public class OrderService implements IOrderService{
 		}
 
 		double sellPrice = coin.getCurrentPrice();
-		double buyPrice = assetToSell.getPrice();
-		OrderItem orderItem = createOrderItem(coin, quantity,buyPrice, sellPrice);
+		Asset assetToSell = assetService.findAssetByUserIdAndCoinId(user.getId(), coin.getId());
+		if (assetToSell != null) {
 
-		Order order = createOrder(user, orderItem, OrderType.SELL);
-		orderItem.setOrder(order);
+			double buyPrice = assetToSell.getBuyPrice();
+			OrderItem orderItem = createOrderItem(coin, quantity, buyPrice, sellPrice);
 
-		if (assetToSell.getQuantity() >= quantity) {
+			Order order = createOrder(user, orderItem, OrderType.SELL);
+			orderItem.setOrder(order);
 
-			order.setStatus(OrderStatus.SUCCESS);
-			order.setOrderType(OrderType.SELL);
-			Order savedOrder = orderRepository.save(order);
+			if (assetToSell.getQuantity() >= quantity) {
 
-			walletService.payOrderPayment(order, user);
+				order.setStatus(OrderStatus.SUCCESS);
+				order.setOrderType(OrderType.SELL);
+				Order savedOrder = orderRepository.save(order);
 
-			Asset updatedAsset = assetService.updateAsset(assetToSell.getId(), quantity);
-			if (updatedAsset.getQuantity()*coin.getCurrentPrice() <= 1) {
-				assetService.deleteAsset(updatedAsset.getId());
+				walletService.payOrderPayment(order, user);
+
+				Asset updatedAsset = assetService.updateAsset(assetToSell.getId(), quantity);
+
+				if (updatedAsset.getQuantity() * coin.getCurrentPrice() <= 1) {
+					assetService.deleteAsset(updatedAsset.getId());
+				}
+				return savedOrder;
 			}
-			return savedOrder;
-		} else {
 			throw new Exception("quantity should be greater than 0");
 		}
-		//create asset
-
-		return savedOrder;
+		throw new Exception("Asset not found");
 	}
 
 	@Override
@@ -125,7 +132,7 @@ public class OrderService implements IOrderService{
 		if (orderType.equals(OrderType.BUY)) {
 			return buyAsset(coin, quantity, user);
 		} else if (orderType.equals(OrderType.SELL)) {
-			return sellAsset(coin, quantity,user);
+			return sellAsset(coin, quantity, user);
 		}
 		throw new Exception("Invalid order type");
 	}

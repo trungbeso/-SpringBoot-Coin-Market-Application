@@ -8,7 +8,6 @@ import com.coinMarket.service.IUserService;
 import com.coinMarket.service.IWalletService;
 import com.coinMarket.service.OrderService;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
@@ -23,8 +22,8 @@ public class WalletController {
 
 	IWalletService walletService;
 	IUserService userService;
-	private final OrderService orderService;
-	IOrder
+	OrderService orderService;
+
 
 	@GetMapping
 	public ResponseEntity<Wallet> getUserWallet(@RequestHeader("Authorization") String jwt) throws Exception {
