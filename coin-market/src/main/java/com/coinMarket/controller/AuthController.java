@@ -3,11 +3,13 @@ package com.coinMarket.controller;
 import com.coinMarket.configuration.JwtProvider;
 import com.coinMarket.model.TwoFactorOTP;
 import com.coinMarket.model.User;
+import com.coinMarket.model.Watchlist;
 import com.coinMarket.repositories.IUserRepository;
 import com.coinMarket.response.AuthResponse;
 import com.coinMarket.service.CustomUserDetailsService;
 import com.coinMarket.service.EmailService;
 import com.coinMarket.service.ITwoFactorOtpService;
+import com.coinMarket.service.IWatchlistService;
 import com.coinMarket.utils.OtpUtil;
 import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
@@ -33,6 +35,7 @@ public class AuthController {
 	CustomUserDetailsService customUserDetailsService;
 	ITwoFactorOtpService twoFactorOtpService;
 	EmailService emailService;
+	IWatchlistService watchlistService;
 
 	@PostMapping("/signup")
 	public ResponseEntity<AuthResponse> register(@RequestBody User user) {
@@ -47,6 +50,8 @@ public class AuthController {
 			  .email(user.getEmail())
 			  .build();
 		newUser = userRepository.save(newUser);
+
+		watchlistService.createWatchList(newUser);
 
 		Authentication auth = new UsernamePasswordAuthenticationToken(user.getEmail()
 			  , user.getPassword());

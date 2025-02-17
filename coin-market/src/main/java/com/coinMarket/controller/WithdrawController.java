@@ -2,9 +2,11 @@ package com.coinMarket.controller;
 
 import com.coinMarket.model.User;
 import com.coinMarket.model.Wallet;
+import com.coinMarket.model.WalletTransaction;
 import com.coinMarket.model.Withdraw;
 import com.coinMarket.service.IUserService;
 import com.coinMarket.service.IWalletService;
+import com.coinMarket.service.IWalletTransactionService;
 import com.coinMarket.service.IWithdrawService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ public class WithdrawController {
 	IWithdrawService withdrawService;
 	IWalletService walletService;
 	IUserService userService;
-//wallet transactional
+	IWalletTransactionService walletTransactionService;
 
 	@PostMapping("/{amount}")
 	public ResponseEntity<?> withdrawRequest(@PathVariable Long amount,
@@ -34,6 +36,8 @@ public class WithdrawController {
 
 		//subtract
 		walletService.addBalance(userWallet, -withdraw.getAmount());
+
+//		WalletTransaction walletTransaction = walletTransactionService.createTransaction(user);
 
 		return new ResponseEntity<>(withdraw, HttpStatus.OK);
 	}

@@ -1,7 +1,6 @@
 package com.coinMarket.controller;
 
 import com.coinMarket.model.*;
-import com.coinMarket.response.PaymentResponse;
 import com.coinMarket.service.IPaymentOrderService;
 import com.coinMarket.service.IUserService;
 import com.coinMarket.service.IWalletService;
@@ -12,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -75,13 +76,15 @@ public class WalletController {
 
 		Boolean status = paymentService.ProceedPaymentOrder(order, paymentId);
 
+		if (wallet.getBalance().equals(null)) {
+			wallet.setBalance(BigDecimal.ZERO);
+		}
 		if (status) {
 			wallet = walletService.addBalance(wallet, order.getAmount());
 		}
 
 		return new ResponseEntity<>(wallet, HttpStatus.ACCEPTED);
 	}
-
 
 
 }
