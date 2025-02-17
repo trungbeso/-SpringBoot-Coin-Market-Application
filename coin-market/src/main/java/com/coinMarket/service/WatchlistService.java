@@ -21,9 +21,7 @@ public class WatchlistService implements IWatchlistService{
 	@Override
 	public Watchlist findUserWatchlist(Long userId) {
 		Watchlist watchlist = watchlistRepository.findByUserId(userId);
-		if (watchlist == null) {
-			throw new RuntimeException("Watchlist not found");
-		}
+
 		return watchlist;
 	}
 

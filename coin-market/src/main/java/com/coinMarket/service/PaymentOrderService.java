@@ -15,11 +15,9 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.AccessLevel;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,7 +25,7 @@ import org.springframework.stereotype.Service;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class PaymentOrderService implements IPaymentOrderService{
+public class PaymentOrderService implements IPaymentOrderService {
 
 	IPaymentOrderRepository paymentOrderRepository;
 
@@ -49,6 +47,8 @@ public class PaymentOrderService implements IPaymentOrderService{
 		paymentOrder.setUser(user);
 		paymentOrder.setAmount(amount);
 		paymentOrder.setMethod(method);
+		paymentOrder.setStatus(PaymentOrderStatus.PENDING);
+
 		paymentOrder = paymentOrderRepository.save(paymentOrder);
 		return paymentOrder;
 	}
@@ -60,6 +60,9 @@ public class PaymentOrderService implements IPaymentOrderService{
 
 	@Override
 	public Boolean ProceedPaymentOrder(PaymentOrder paymentOrder, String paymentId) throws RazorpayException {
+		if (paymentOrder.getStatus().equals(null)) {
+			paymentOrder.setStatus(PaymentOrderStatus.PENDING);
+		}
 		if (paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
 			if (paymentOrder.getMethod().equals(PaymentMethod.RAZORPAY)) {
 				RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecretKey);
@@ -84,7 +87,7 @@ public class PaymentOrderService implements IPaymentOrderService{
 	}
 
 	@Override
-	public PaymentResponse createRazorpayPaymentLing(User user, Long amount) throws RazorpayException {
+	public PaymentResponse createRazorpayPaymentLing(User user, Long amount, Long orderId) throws RazorpayException {
 		Long Amount = amount * 100;
 		try {
 			RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecretKey);
@@ -107,7 +110,7 @@ public class PaymentOrderService implements IPaymentOrderService{
 			paymentLinkRequest.put("reminder_enable", true);
 
 			//set callback url and method
-			paymentLinkRequest.put("callback_url", "http://localhost:5173/wallet");
+			paymentLinkRequest.put("callback_url", "http://localhost:5173/walletorder_id=" + orderId);
 			paymentLinkRequest.put("callback_method", "get");
 
 			//create the payment link using the paymentLink.create() method
@@ -135,19 +138,19 @@ public class PaymentOrderService implements IPaymentOrderService{
 			  .setSuccessUrl("http://localhost:5173/wallet?order_id=" + orderId)
 			  .setCancelUrl("http://localhost:5173/payment/cancel")
 			  .addLineItem(SessionCreateParams.LineItem.builder()
-				    .setQuantity(1L)
-				    .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-					      .setCurrency("usd")
-					      .setUnitAmount(amount*100)
-					      .setProductData(SessionCreateParams
-						        .LineItem
-						        .PriceData
-						        .ProductData
-						        .builder()
-						        .setName("Top up Wallet")
-						        .build())
-					      .build())
-				    .build())
+					 .setQuantity(1L)
+					 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+							.setCurrency("usd")
+							.setUnitAmount(amount * 100)
+							.setProductData(SessionCreateParams
+								  .LineItem
+								  .PriceData
+								  .ProductData
+								  .builder()
+								  .setName("Top up Wallet")
+								  .build())
+							.build())
+					 .build())
 			  .build();
 
 		Session session = Session.create(params);

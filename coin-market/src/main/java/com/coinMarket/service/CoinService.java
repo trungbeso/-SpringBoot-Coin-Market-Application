@@ -81,12 +81,12 @@ public class CoinService implements ICoinService {
 			coin.setTotalVolume(marketData.get("total_volume").get("usd").asLong());
 			coin.setHigh24h(marketData.get("high_24h").get("usd").asDouble());
 			coin.setLow24h(marketData.get("low_24h").get("usd").asDouble());
-			coin.setPriceChange24h(marketData.get("price_change_24h").get("usd").asDouble());
-			coin.setPriceChangePercentage24h(marketData.get("price_change_percentage_24h").get("usd").asDouble());
-			coin.setMarketCapChange24h(marketData.get("market_cap_change_24h").get("usd").asLong());
-			coin.setMarketCapChangePercentage24h(marketData.get("market_cap_change_percentage_24h").get("usd").asDouble());
+			coin.setPriceChange24h(marketData.get("price_change_24h").asDouble());
+			coin.setPriceChangePercentage24h(marketData.get("price_change_percentage_24h").asDouble());
+			coin.setMarketCapChange24h(marketData.get("market_cap_change_24h").asLong());
+			coin.setMarketCapChangePercentage24h(marketData.get("market_cap_change_percentage_24h").asDouble());
 			coin.setCirculatingSupply(marketData.get("circulating_supply").get("usd").asLong());
-			coin.setTotalSupply(marketData.get("total_supply").get("usd").asLong());
+			coin.setTotalSupply(marketData.get("total_supply").asLong());
 			coin.setMaxSupply(marketData.get("max_supply").get("usd").asLong());
 			coin.setAth(marketData.get("ath").get("usd").asDouble());
 
@@ -115,13 +115,13 @@ public class CoinService implements ICoinService {
 
 	@Override
 	public String getTop50CoinsByMarketCapRank() throws Exception {
-		String url = "https://api.coingecko.com/api/v3/coins/markets/vs_currency=usd&per_page=50&page=1";
+		String url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50&page=1";
 		return getRestTemplate(url);
 	}
 
 	@Override
-	public String getTreadingCoins() throws Exception {
-		String url = "https://api.coingecko.com/api/v3/search/trading";
+	public String getTrendingCoins() throws Exception {
+		String url = "https://api.coingecko.com/api/v3/search/trending";
 		return getRestTemplate(url);
 	}
 
