@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RestController
-@RequestMapping("${api.prefix}/withdraws")
+@RequestMapping("${api.prefix}/withdrawal")
 public class WithdrawController {
 	IWithdrawService withdrawService;
 	IWalletService walletService;

@@ -26,15 +26,15 @@ public class TransactionController {
 	IUserService userService;
 	IWalletTransactionService walletTransactionService;
 
-	@GetMapping
-	public ResponseEntity<List<WalletTransaction>> getUserWallet(@RequestHeader("Authorization") String jwt) throws Exception {
-		User user = userService.findUserProfileByJwt(jwt);
-
-		Wallet wallet = walletTransactionService.getUserWallet(user);
-
-		List<WalletTransaction> transactionList = walletTransactionService.getTransactionByWallet(wallet);
-
-		return new ResponseEntity<>(transactionList, HttpStatus.ACCEPTED);
-
-	}
+//	@GetMapping
+//	public ResponseEntity<List<WalletTransaction>> getUserWallet(@RequestHeader("Authorization") String jwt) throws Exception {
+//		User user = userService.findUserProfileByJwt(jwt);
+//
+//		Wallet wallet = walletTransactionService.getUserWallet(user);
+//
+//		List<WalletTransaction> transactionList = walletTransactionService.getTransactionByWallet(wallet);
+//
+//		return new ResponseEntity<>(transactionList, HttpStatus.ACCEPTED);
+//
+//	}
 }

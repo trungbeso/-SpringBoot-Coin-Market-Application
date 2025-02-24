@@ -1,6 +1,7 @@
 package com.coinMarket.controller;
 
 import com.coinMarket.configuration.JwtProvider;
+import com.coinMarket.enums.USER_ROLE;
 import com.coinMarket.model.TwoFactorOTP;
 import com.coinMarket.model.User;
 import com.coinMarket.model.Watchlist;
@@ -48,6 +49,7 @@ public class AuthController {
 			  .fullName(user.getFullName())
 			  .password(user.getPassword())
 			  .email(user.getEmail())
+			  .role(USER_ROLE.CUSTOMER)
 			  .build();
 		newUser = userRepository.save(newUser);
 

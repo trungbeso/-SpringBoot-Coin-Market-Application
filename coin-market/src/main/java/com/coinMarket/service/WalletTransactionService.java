@@ -18,10 +18,10 @@ public class WalletTransactionService implements IWalletTransactionService{
 	IWalletTransactionRepository walletTransactionRepository;
 
 
-	@Override
-	public Wallet getUserWallet(User user) {
-		return walletTransactionRepository.getUserWallet(user).getWallet();
-	}
+//	@Override
+//	public Wallet getUserWallet(User user) {
+//		return walletTransactionRepository.getUserWallet(user).getWallet();
+//	}
 
 	@Override
 	public List<WalletTransaction> getTransactionByWallet(Wallet wallet) {
