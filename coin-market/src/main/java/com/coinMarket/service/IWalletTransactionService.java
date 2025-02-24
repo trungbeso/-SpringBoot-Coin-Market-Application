@@ -7,7 +7,7 @@ import com.coinMarket.model.WalletTransaction;
 import java.util.List;
 
 public interface IWalletTransactionService {
-	Wallet getUserWallet(User user);
+//	Wallet getUserWallet(User user);
 
 	List<WalletTransaction> getTransactionByWallet (Wallet wallet);
 }

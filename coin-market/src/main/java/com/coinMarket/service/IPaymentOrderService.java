@@ -4,6 +4,7 @@ import com.coinMarket.enums.PaymentMethod;
 import com.coinMarket.model.PaymentOrder;
 import com.coinMarket.model.User;
 import com.coinMarket.response.PaymentResponse;
+import com.paypal.base.exception.PayPalException;
 import com.razorpay.RazorpayException;
 import com.stripe.exception.StripeException;
 
@@ -18,4 +19,5 @@ public interface IPaymentOrderService {
 	PaymentResponse createRazorpayPaymentLing(User user, Long amount, Long orderId) throws RazorpayException;
 
 	PaymentResponse createStripePaymentLing(User user, Long amount, Long orderId) throws StripeException;
+
 }

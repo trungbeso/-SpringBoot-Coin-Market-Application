@@ -1,5 +1,5 @@
 package com.coinMarket.enums;
 
 public enum PaymentMethod {
-	RAZORPAY, STRIPE;
+	RAZORPAY, STRIPE, PAYPAL;
 }

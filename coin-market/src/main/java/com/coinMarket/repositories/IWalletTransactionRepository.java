@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IWalletTransactionRepository extends JpaRepository<WalletTransaction, Long> {
-	WalletTransaction getUserWallet(User user);
+	//WalletTransaction getUserWallet(User user);
 }
