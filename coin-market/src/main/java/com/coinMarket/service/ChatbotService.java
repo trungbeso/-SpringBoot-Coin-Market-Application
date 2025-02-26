@@ -6,6 +6,7 @@ import com.coinMarket.response.FunctionResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,8 +19,8 @@ import java.util.Map;
 @Service
 public class ChatbotService implements IChatbotService {
 
-	//	@Value("")
-	private final String GEMINI_API_KEY = "AIzaSyAX31hjh5Dz0cL9Poa_icVMF8CI_-jytLE";
+	@Value("${gemini.api.key}")
+	private String GEMINI_API_KEY;
 
 	private double convertToDouble(Object value) {
 		if (value instanceof Integer) {
@@ -34,8 +35,7 @@ public class ChatbotService implements IChatbotService {
 	}
 
 	public FunctionResponse getFunctionResponse(String prompt) {
-		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="
-			  + GEMINI_API_KEY;
+		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + GEMINI_API_KEY;
 
 		// Create Json request body using method chaining
 		JSONObject requestBodyJson = new JSONObject()
@@ -167,8 +167,7 @@ public class ChatbotService implements IChatbotService {
 		FunctionResponse res = getFunctionResponse(prompt);
 		CoinDto apiResponse = makeApiRequest(res.getCurrencyName().toLowerCase());
 
-		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="
-			  + GEMINI_API_KEY;
+		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + GEMINI_API_KEY;
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -271,8 +270,7 @@ public class ChatbotService implements IChatbotService {
 
 	@Override
 	public String simpleChat(String prompt) {
-		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
-			  + GEMINI_API_KEY;
+		String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + GEMINI_API_KEY;
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
